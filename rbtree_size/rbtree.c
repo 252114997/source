@@ -61,7 +61,7 @@ static void __rb_rotate_left(struct rb_node *node, struct rb_root *root)
 	rb_set_parent(node, right);
 
 	//size
-	node->size = rb_node_size(node->rb_left) + rb_node_size(node->rb_right) + 1;
+	node->size  = rb_node_size(node->rb_left)  + rb_node_size(node->rb_right)  + 1;
 	right->size = rb_node_size(right->rb_left) + rb_node_size(right->rb_right) + 1;
 }
 
@@ -292,6 +292,8 @@ void rb_erase(struct rb_node *node, struct rb_root *root)
 		node->rb_parent_color = old->rb_parent_color;
 		node->rb_left = old->rb_left;
 		rb_set_parent(old->rb_left, node);
+		//size
+		node->size = old->size;
 
 		goto color;
 	}

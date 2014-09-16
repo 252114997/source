@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <string.h>
 
+#define NUM_NODES 32 
 struct mynode {
   	struct rb_node node;
   	char *string;
@@ -26,10 +27,8 @@ struct mynode {
 
 struct rb_root mytree = RB_ROOT;
 
-struct mynode * my_search_n(struct rb_root *root, int n)
+struct mynode * my_search_n(struct rb_node *node, int n)
 {
-  	struct rb_node *node = root->rb_node;
-
 	if (NULL == node) {
 		return NULL;
 	}
@@ -111,15 +110,78 @@ void my_free(struct mynode *node)
 	}
 }
 
+//使用rb_first() rb_next()遍历树节点
+void print_all(struct rb_node *root)
+{
+	printf("print all by rb_first() rb_next()\n");
+	if (NULL == root) {
+		return;
+	}
+
+	struct rb_node *node;
+	printf("  ");
+	for (node = rb_first(&mytree); node; node = rb_next(node))
+		printf("%s ", rb_entry(node, struct mynode, node)->string);
+	printf("\n");
+}
+
+//使用递归遍历树节点 (中根)
 void print_ldr(struct rb_node *root)
 {
-	if (NULL == root)
-	{
+	if (NULL == root) {
 		return;
 	}
 	print_ldr(root->rb_left);
-    printf("%s ", rb_entry(root, struct mynode, node)->string);  
+    //printf("%s ", rb_entry(root, struct mynode, node)->string);  
+    printf("%s(%lu) ", rb_entry(root, struct mynode, node)->string, rb_node_size(root));  
 	print_ldr(root->rb_right);
+}
+void print_all_ldr(struct rb_node *root)
+{
+	printf("print all by ldr\n");
+	if (NULL == root) {
+		return;
+	}
+	printf("  ");
+	print_ldr(mytree.rb_node);
+	printf("\n");
+}
+
+
+//使用search_n()函数遍历树节点
+void print_all_n(struct rb_node *root)
+{
+	printf("print all by search_n()\n");
+	if (NULL == root) {
+		return;
+	}
+	int i;
+	printf("  ");
+	for (i=1; i <= NUM_NODES; i++) {
+		struct mynode *data = my_search_n(root, i);
+		if (data) {
+			//printf("  the number %d data is %s \n", i, data->string);
+			printf("%s ", data->string);
+		}
+		else {
+			//printf("  not found the number %d data.\n", i);
+			printf("- ");
+		}
+	}
+	printf("\n");
+}
+
+void my_delete(int num)
+{
+	/* *delete */
+	char str_num[256];
+	sprintf(str_num, "%d", num);
+	printf("delete node %d: \n", num);
+	struct mynode *data = my_search(&mytree, str_num);
+	if (data) {
+		rb_erase(&data->node, &mytree);
+		my_free(data);
+	}
 }
 
 void print_root_size(struct rb_root *root) 
@@ -127,7 +189,6 @@ void print_root_size(struct rb_root *root)
 	printf("size=%lu\n", rb_node_size(root->rb_node));
 }
 
-#define NUM_NODES 32
 int main()
 {
 	struct mynode *mn[NUM_NODES];
@@ -135,63 +196,30 @@ int main()
 	/* *insert */
 	int i = 0;
 	printf("insert node from 1 to NUM_NODES(32): \n");
-	for (; i < NUM_NODES; i++) {
+	for (i=0; i < NUM_NODES; i++) {
 		mn[i] = (struct mynode *)malloc(sizeof(struct mynode));
 		mn[i]->string = (char *)malloc(sizeof(char) * 4);
 		sprintf(mn[i]->string, "%d", i);
 		my_insert(&mytree, mn[i]);
-		//print_root_size(&mytree);
 	}
 	
-	/* *search */
-	struct rb_node *node;
-	printf("search all nodes: \n");
-	for (node = rb_first(&mytree); node; node = rb_next(node))
-		printf("%s ", rb_entry(node, struct mynode, node)->string);
+	print_all(rb_first(&mytree)); 
+	print_all_ldr(mytree.rb_node);
+	print_all_n(mytree.rb_node);
 	printf("\n");
-
-	print_ldr(mytree.rb_node);
-	printf("\n");
-	
-	/* search n */
-	for (i=1; i <= NUM_NODES; i++) {
-		struct mynode *data = my_search_n(&mytree, i);
-		if (data) {
-			printf("the number %d data is %s \n", i, data->string);
-		}
-		else {
-			printf("not found the number %d data.\n", i);
-		}
-	}
 
 	/* *delete */
-	printf("delete node 20: \n");
-	struct mynode *data = my_search(&mytree, "20");
-	if (data) {
-		rb_erase(&data->node, &mytree);
-		my_free(data);
+	int delete_array[] = {20, 10, 15, 11, 12, 30, 138};
+	for (i=0; i < sizeof(delete_array)/sizeof(int); i++) {
+		my_delete(delete_array[i]);
+		print_all_ldr(mytree.rb_node);
+		printf("\n");
 	}
-
-	/* *delete again*/
-	printf("delete node 10: \n");
-	data = my_search(&mytree, "10");
-	if (data) {
-		rb_erase(&data->node, &mytree);
-		my_free(data);
-	}
-
-	/* *delete once again*/
-	printf("delete node 15: \n");
-	data = my_search(&mytree, "15");
-	if (data) {
-		rb_erase(&data->node, &mytree);
-		my_free(data);
-	}
-
-	/* *search again*/
-	printf("search again:\n");
-	for (node = rb_first(&mytree); node; node = rb_next(node))
-		printf("key = %s\n", rb_entry(node, struct mynode, node)->string);
+	
+	print_all(rb_first(&mytree)); 
+	print_all_ldr(mytree.rb_node);
+	print_all_n(mytree.rb_node);
+	printf("\n");
 	return 0;
 }
 
