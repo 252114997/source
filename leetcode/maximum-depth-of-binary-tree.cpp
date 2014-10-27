@@ -1,5 +1,6 @@
 /*
 https://oj.leetcode.com/problems/maximum-depth-of-binary-tree/
+
 Given a binary tree, find its maximum depth.
 
 The maximum depth is the number of nodes along the longest path from the root node down to the farthest leaf node.
@@ -8,8 +9,6 @@ The maximum depth is the number of nodes along the longest path from the root no
 源码中的二叉树引用了http://www.codeproject.com/Articles/602805/Creating-a-binary-search-tree-B 
 可用最简单的递归法解决；
 或者广度优先遍历（BFS)
-但我觉得更简单的办法是在树节点中添加size，表示子节点个数。
-查找时一直向size大的节点走。如此效率最高速度最快。
 
 reference:
 http://blog.csdn.net/ithomer/article/details/8799795
