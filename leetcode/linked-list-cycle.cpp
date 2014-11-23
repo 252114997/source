@@ -1,17 +1,17 @@
 /*
-  https://oj.leetcode.com/problems/linked-list-cycle/
-Given a linked list, determine if it has a cycle in it.
-
-Follow up:
-Can you solve it without using extra space?
-
-解：
-使用HASH记录所有访问过的节点，如果发现新节点已经存在于HASH中，则说明链表存在循环。
-如果不使用额外的HASH解决此问题，使用经典的龟兔赛跑算法，慢指针每次跑一次，快指针每次跑两步，如果快、慢指针相遇，则表明链表存在循环。
-
-参考：
-http://ostermiller.org/find_loop_singly_linked_list.html
-*/
+ * https://oj.leetcode.com/problems/linked-list-cycle/
+ * Given a linked list, determine if it has a cycle in it.
+ *
+ * Follow up:
+ * Can you solve it without using extra space?
+ *
+ * 解：
+ * 使用HASH记录所有访问过的节点，如果发现新节点已经存在于HASH中，则说明链表存在循环。
+ * 如果不使用额外的HASH解决此问题，使用经典的龟兔赛跑算法，慢指针每次跑一次，快指针每次跑两步，如果快、慢指针相遇，则表明链表存在循环。
+ *
+ * 参考：
+ * http://ostermiller.org/find_loop_singly_linked_list.html
+ */
 
 #include <stdio.h>
 #include <map>

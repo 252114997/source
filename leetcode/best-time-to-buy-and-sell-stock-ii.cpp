@@ -1,3 +1,15 @@
+/*
+https://oj.leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/
+Say you have an array for which the ith element is the price of a given stock on day i.
+
+Design an algorithm to find the maximum profit. You may complete as many transactions as you like (ie, buy one and sell one share of the stock multiple times). However, you may not engage in multiple transactions at the same time (ie, you must sell the stock before you buy again).
+
+解：
+只要找到所有上升过程的两个值，累积高低值的差即可满足题目
+现实生活中的股票买卖肯定达不到如此高的收效
+因为我的算法是“事后诸葛亮”
+*/
+
 #include <vector>
 #include <stdio.h>
 
