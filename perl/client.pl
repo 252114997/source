@@ -1,4 +1,9 @@
 #!/usr/bin/perl
+# file: gab7.pl
+# Figure 14.1: The gab7.pl script uses IO::Poll to multiplex input and output
+
+# usage: gab7.pl [host] [port]
+
 
 use strict;
 use IO::Socket;
@@ -17,6 +22,7 @@ my $poll = IO::Poll->new() or die "Cna't create IO::Poll object";
 $poll->mask(\*STDIN => POLLIN); # TODO what is \* ?
 $poll->mask($socket => POLLIN);
 
+# test
 my $EOL = "\015\012";
 if (!syswrite($socket, "GET /baidu.com HTTP/1.1".$EOL.$EOL)) {
 	die "failed to GET\n";
@@ -31,8 +37,7 @@ while ($poll->handles) {
 	# handle readers
 	for my $handle ($poll->handles(POLLIN|POLLHUP|POLLERR)) {
 		if ($handle eq \*STDIN) {
-			$stdin_done++ unless sysread($STDIN, $to_socket, 2048, length($to_socket));
-			
+			$stdin_done++ unless sysread(STDIN, $to_socket, 2048, length($to_socket));
 		}
 		elsif ($handle eq $socket) {
 			$sock_done++ unless sysread($socket, $to_stdout,2048, length($to_stdout));
@@ -60,7 +65,7 @@ while ($poll->handles) {
 	}
 }
 continue {
-	my ($outmask, $inmask, $sockmask) = {0, 0, 0};
+	my ($outmask, $inmask, $sockmask) = (0, 0, 0);
 
 	$outmask = POLLOUT if length($to_stdout) > 0;
 	$inmask = POLLIN unless length($to_socket) >= MAXBUF
