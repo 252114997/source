@@ -1,29 +1,27 @@
 #!/usr/bin/perl
 # file: gab7.pl
-# Figure 14.1: The gab7.pl script uses IO::Poll to multiplex input and output
-
-# usage: gab7.pl [host] [port]
-
+# 《perl网络编程》16.1节多路复用输入输出脚本
 
 use strict;
 use IO::Socket;
 use IO::Poll qw(POLLIN POLLOUT POLLERR POLLHUP);
 use Errno qw(EWOULDBLOCK);
 use constant MAXBUF => 8192;
-$SIG{PIPE} = 'IGNORE'; # TODO 这是做什么
+$SIG{PIPE} = 'IGNORE'; # 忽略PIPE信号，防止程序write已关闭的连接时异常退出
 
 my ($to_stdout, $to_socket, $stdin_done, $sock_done);
 
-my $host = shift or die "Usage: pollnet.pl host [port]\n";
-my $port = shift || 'echo'; # TODO what is this?
-my $socket = IO::Socket::INET->new("$host:$port") or die $@; # TODO what is that $@ ? other default is TCP?
+my $host = shift || "127.0.0.1";
+my $port = shift || 9000;
+print "Connecting $host:$port \n";
+my $socket = IO::Socket::INET->new("$host:$port") or die $@; # $@ 比 $! 输出的错误信息多一些。INET->new()返回的socket类型依据参数而有变化，具体描述参考 perldoc.perl.org
 
-my $poll = IO::Poll->new() or die "Cna't create IO::Poll object";
-$poll->mask(\*STDIN => POLLIN); # TODO what is \* ?
+my $poll = IO::Poll->new() or die "Can't create IO::Poll object";
+$poll->mask(\*STDIN => POLLIN); # \* 是typeglob，也叫类型团。具体原理不详，但一般在函数或类中传递 文件、socket句柄 时使用。
 $poll->mask($socket => POLLIN);
 
 # test
-my $EOL = "\015\012";
+my $EOL = "\015\012"; # 使用\015\012比使用\r\n的好处是，在多平台(windows, unix)中能保持不变的行为。
 if (!syswrite($socket, "GET /baidu.com HTTP/1.1".$EOL.$EOL)) {
 	die "failed to GET\n";
 }
@@ -48,11 +46,11 @@ while ($poll->handles) {
 	for my $handle ($poll->handles(POLLOUT|POLLERR)) {
 		if ($handle eq \*STDOUT) {
 			my $bytes = syswrite(STDOUT, $to_stdout);
-			unless ($bytes) { # TODO notices this program style
+			unless ($bytes) { 
 				next if $! == EWOULDBLOCK;
 				die "write to stdout failed: $!";
 			}
-			substr($to_stdout, 0, $bytes) = ''; # TODO notices this 
+			substr($to_stdout, 0, $bytes) = ''; # 去除已经发送的字节
 		}
 		elsif ($handle eq $socket) {
 			my $bytes = syswrite($socket, $to_socket);
@@ -67,16 +65,28 @@ while ($poll->handles) {
 continue {
 	my ($outmask, $inmask, $sockmask) = (0, 0, 0);
 
-	$outmask = POLLOUT if length($to_stdout) > 0;
-	$inmask = POLLIN unless length($to_socket) >= MAXBUF
-							or ($sock_done || $stdin_done); # TODO unless or ?
+	if (length($to_stdout) > 0){
+		$outmask = POLLOUT;
+	}
+	if (length($to_socket) < MAXBUF
+		&& !($sock_done || $stdin_done)) { # TODO unless or ?
+		$inmask = POLLIN;
+	}
 	
-	$sockmask  = POLLOUT unless length($to_socket) == 0 or $sock_done;
-	$sockmask |= POLLIN  unless length($to_stdout) >= MAXBUF or $sock_done;
+	if (length($to_socket) > 0 && !$sock_done) {
+		$sockmask  = POLLOUT;
+	}
+
+	if (length($to_stdout) < MAXBUF && !$sock_done) {
+		$sockmask |= POLLIN;
+	}
 
 	$poll->mask(\*STDIN => $inmask);
 	$poll->mask(\*STDOUT => $outmask);
 	$poll->mask($socket => $sockmask);
 
-	$socket->shutdown(1) if $stdin_done and !length($to_socket); 
+	if ($stdin_done and !length($to_socket)) { 
+		$socket->shutdown(1);
+	}
 }
+print "end...\n";
