@@ -9,6 +9,7 @@
 #include <vector>
 #include <queue>
 #include <stack>
+#include <map>
 #include <stdio.h>
 
 using namespace std;
@@ -21,6 +22,7 @@ class bstree
 		unsigned int data;
 		int leftIdx;
 		int rightIdx;
+		int nextIdx;
 	};
 	
 public:
@@ -223,6 +225,74 @@ public:
 		return order;
 	}
 
+	/**
+	 * @brief 保存二叉树中每层结点最左侧的结点
+	 *
+	 * key:tree depth, value:idx
+	 * 执行connect()函数时会被赋值
+	 */
+	map<unsigned int, int> _listNextRight;
+
+	/**
+	 * @brief 按层输出二叉树的节点，每层从左向右输出
+	 * @param depth:从第几层开始输出，默认为0，即根节点为第0层
+	 */
+	void print_connect(int depth = 0) {
+		printf("connect tree:\n");
+		for(int i = depth; i < _listNextRight.size(); i++) {
+			int cur = _listNextRight[i];
+
+			while (-1 != cur) {
+				printf("%d ", _treedata[cur].data);
+				cur = _treedata[cur].nextIdx;
+			}
+			printf("\n");
+		}
+		return;
+	}
+
+	/**
+	 * @brief 链接二叉树各层的节点，每个节点的nextIdx即指向其相同深度的右侧节点
+	 * @param idx:执行链接操作的起始节点位置，默认为0，即根节点
+	 *
+	 * https://oj.leetcode.com/problems/populating-next-right-pointers-in-each-node/
+	 */
+	void connect(int idx = 0) {
+		unsigned int depth = 0;
+		int nextIdx;
+		unsigned int child_num = 0;
+		queue<int> unvisited;
+
+		if (-1 == idx) {
+			return;
+		}
+
+		_listNextRight.clear();
+		unvisited.push(idx);
+		child_num = unvisited.size();
+		nextIdx = -1;
+		while (!unvisited.empty()) {
+			int cur = unvisited.front();
+			unvisited.pop();
+			if (-1 != _treedata[cur].rightIdx) {
+				unvisited.push(_treedata[cur].rightIdx);
+			}
+			if (-1 != _treedata[cur].leftIdx) {
+				unvisited.push(_treedata[cur].leftIdx);
+			}
+			_treedata[cur].nextIdx = nextIdx;
+			child_num--;
+			if (child_num==0) {
+				_listNextRight[depth++] = cur;
+				nextIdx = -1;
+				child_num = unvisited.size();
+			}
+			else {
+				nextIdx = cur;
+			}
+		}
+		return;
+	}
 
 	// 使用Queue 实现 BFS 广度优先遍历
 	unsigned int maxDepthBfs(int idx = 0) 
@@ -238,7 +308,7 @@ public:
 		unvisited.push(idx);
 		child_num = unvisited.size();
 		while (!unvisited.empty()) {
-			unsigned int cur = unvisited.front();
+			int cur = unvisited.front();
 			unvisited.pop();
 			if (-1 != _treedata[cur].leftIdx) {
 				unvisited.push(_treedata[cur].leftIdx);
